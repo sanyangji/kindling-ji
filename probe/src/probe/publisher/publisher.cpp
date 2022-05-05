@@ -27,7 +27,7 @@ publisher::~publisher() {
     delete m_client_event_map;
 }
 
-void publisher::consume_sysdig_event(sinsp_evt *evt, int pid, converter *sysdigConverter) {
+void publisher::consume_sysdig_event(sinsp_evt *evt, int pid, converter *sysdigConverter, converter *cpuConverter) {
     if (!m_socket) {
         return;
     }
@@ -38,33 +38,50 @@ void publisher::consume_sysdig_event(sinsp_evt *evt, int pid, converter *sysdigC
             return;
         }
     }
+    switch (evt->get_type()) {
+        case PPME_CPU_ANALYSIS_E:
+            cpu_convert(evt, cpuConverter);
+            break;
+        default:
+            default_sysdig_convert(evt, sysdigConverter);
+    }
+    
+}
+void publisher::sysdig_convert_base(sinsp_evt *evt, converter *_conv) {
+    auto it = m_kindlingEventLists.find(_conv);
+    KindlingEventList* kindlingEventList;
+    if (it == m_kindlingEventLists.end()) {
+        kindlingEventList = new KindlingEventList();
+        m_kindlingEventLists[_conv] = kindlingEventList;
+        m_ready[kindlingEventList] = false;
+    } else {
+        kindlingEventList = it->second;
+    }
+
+    if (_conv->judge_max_size()) {
+        // check if the send list has sent
+        if (m_ready[kindlingEventList]) {
+            // drop event
+            return;
+        }
+        swap_list(_conv, kindlingEventList);
+    }
+
+    _conv->convert(evt);
+    // if send list was sent
+    if (_conv->judge_batch_size() && !m_ready[kindlingEventList]) {
+        swap_list(_conv, kindlingEventList);
+    }
+}
+void publisher::default_sysdig_convert(sinsp_evt *evt, converter *sysdigConverter) {
     // convert sysdig event to kindling event
     if (m_selector->select(evt->get_type(), ((sysdig_converter *) sysdigConverter)->get_kindling_category(evt))) {
-        auto it = m_kindlingEventLists.find(sysdigConverter);
-        KindlingEventList* kindlingEventList;
-        if (it == m_kindlingEventLists.end()) {
-            kindlingEventList = new KindlingEventList();
-            m_kindlingEventLists[sysdigConverter] = kindlingEventList;
-            m_ready[kindlingEventList] = false;
-        } else {
-            kindlingEventList = it->second;
-        }
-
-        if (sysdigConverter->judge_max_size()) {
-            // check if the send list has sent
-            if (m_ready[kindlingEventList]) {
-                // drop event
-                return;
-            }
-            swap_list(sysdigConverter, kindlingEventList);
-        }
-
-        sysdigConverter->convert(evt);
-        // if send list was sent
-        if (sysdigConverter->judge_batch_size() && !m_ready[kindlingEventList]) {
-            swap_list(sysdigConverter, kindlingEventList);
-        }
+        sysdig_convert_base(evt, sysdigConverter);
     }
+}
+
+void publisher::cpu_convert(sinsp_evt *evt, converter *cpuConverter) {
+    sysdig_convert_base(evt, cpuConverter);
 }
 
 Socket publisher::init_zeromq_rep_server() {
