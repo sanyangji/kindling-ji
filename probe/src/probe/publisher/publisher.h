@@ -37,7 +37,7 @@ public:
     // return list, add for converter or clear for send
     vector<KindlingEventList*> get_kindlingEventLists(converter *cvter);
 
-    void consume_sysdig_event(sinsp_evt *evt, int pid, converter *sysdigConverter);
+    void consume_sysdig_event(sinsp_evt *evt, int pid, converter *sysdigConverter, converter *cpuConverter);
     // run [thread] send, [thread] subscribe
     int start();
 private:
@@ -52,6 +52,9 @@ private:
     void unsubscribe(string sub_event);
 
     void swap_list(converter *cvt, KindlingEventList* kindlingEventList);
+    void sysdig_convert_base(sinsp_evt *evt, converter *_conv);
+    void default_sysdig_convert(sinsp_evt *evt, converter *sysdigConverter);
+    void cpu_convert(sinsp_evt *evt, converter *cpuConverter);
 
     // single sender
     Socket m_socket;

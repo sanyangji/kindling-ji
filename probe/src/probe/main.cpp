@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/un.h>
 #include "src/probe/converter/sysdig_converter.h"
+#include "src/probe/converter/cpu_converter.h"
 #include "src/probe/publisher/publisher.h"
 #include "src/probe/converter/kindling_event.pb.h"
 #include "driver/driver_config.h"
@@ -26,6 +27,7 @@ void do_inspect(sinsp *inspector, sinsp_evt_formatter *formatter, int pid, publi
     sinsp_evt *ev;
     string line;
     converter *sysdigConverter = new sysdig_converter(inspector, FLAGS_list_batch_size, FLAGS_list_max_size);
+    converter *cpuConverter = new cpu_converter(inspector, FLAGS_list_batch_size, FLAGS_list_max_size);
     while (true) {
         res = inspector->next(&ev);
         if (res == SCAP_TIMEOUT) {
@@ -56,7 +58,7 @@ void do_inspect(sinsp *inspector, sinsp_evt_formatter *formatter, int pid, publi
             }
         }
 
-        pub->consume_sysdig_event(ev, threadInfo->m_pid, sysdigConverter);
+        pub->consume_sysdig_event(ev, threadInfo->m_pid, sysdigConverter, cpuConverter);
         if (FLAGS_sysdig_output && (FLAGS_sysdig_filter_out_pid_event == -1 || FLAGS_sysdig_filter_out_pid_event == threadInfo->m_pid)) {
             if (formatter->tostring(ev, &line)) {
                 cout<< line << endl;
@@ -132,6 +134,7 @@ int main(int argc, char** argv) {
         try {
             inspector->open("");
             inspector->clear_eventmask();
+            inspector->set_eventmask(PPME_CPU_ANALYSIS_E);
         }
         catch (const sinsp_exception &e) {
             open_success = false;
