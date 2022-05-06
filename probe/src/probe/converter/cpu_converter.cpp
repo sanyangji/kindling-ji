@@ -110,11 +110,11 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
     for (int i = 0; i < cnt; i++) {
         if (time_type[i] == 0) {
             c_data.on_total_time += time_specs[i];
-            times.push_back({start, start + time_specs[i]});
+            times.push_back({start, start + time_specs[i] * 1000});
         } else {
             c_data.off_total_time += time_specs[i];
         }
-        start = start + time_specs[i];
+        start = start + time_specs[i] * 1000;
         c_data.time_specs += (to_string(time_specs[i]) + ",");
         c_data.time_type += (to_string(time_type[i]) +  ",");
     }
