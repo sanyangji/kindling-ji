@@ -43,6 +43,8 @@ using namespace kindling;
 
 cpu_converter::cpu_converter(sinsp *inspector, int batch_size, int max_size) : converter(batch_size, max_size), m_inspector(inspector) {}
 
+cpu_converter::cpu_converter(sinsp *inspector, Profiler *prof, int batch_size, int max_size) : converter(batch_size, max_size), m_inspector(inspector), m_profiler(prof){}
+
 cpu_converter::~cpu_converter() {}
 
 void cpu_converter::convert(void *evt)
@@ -157,8 +159,8 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
 
     // on_stack
     auto on_attr = kevt->add_user_attributes();
-    // string data = handler->get_data(kevt->get_tid(), &times);
-    string data = "";
+    auto s_tinfo = sevt->get_thread_info();
+    string data = m_profiler->GetOnCpuData(s_tinfo->m_tid, times);
     on_attr->set_key("on_stack");
     on_attr->set_value(data);
     on_attr->set_value_type(CHARBUF);
