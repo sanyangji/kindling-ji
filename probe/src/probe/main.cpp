@@ -23,12 +23,12 @@ DEFINE_int32(sysdig_filter_out_pid_event, -1, "When sysdig_output is true, sysdi
 DEFINE_bool(sysdig_bpf, true, "If true, sysdig will use eBPF mode");
 
 #define KINDLING_PROBE_VERSION "v0.1-2021-1221"
-void do_inspect(sinsp *inspector, sinsp_evt_formatter *formatter, int pid, publisher* pub) {
+void do_inspect(sinsp *inspector, sinsp_evt_formatter *formatter, int pid, publisher* pub, Profiler *prof) {
     int32_t res;
     sinsp_evt *ev;
     string line;
     converter *sysdigConverter = new sysdig_converter(inspector, FLAGS_list_batch_size, FLAGS_list_max_size);
-    converter *cpuConverter = new cpu_converter(inspector, FLAGS_list_batch_size, FLAGS_list_max_size);
+    converter *cpuConverter = new cpu_converter(inspector, prof, FLAGS_list_batch_size, FLAGS_list_max_size);
     while (true) {
         res = inspector->next(&ev);
         if (res == SCAP_TIMEOUT) {
@@ -167,9 +167,10 @@ int main(int argc, char** argv) {
         publisher *pub = new publisher(inspector);
 
         TerminationHandler::set_sinsp(inspector);
-        thread inspect(do_inspect, inspector, &formatter, pid, pub);
-
         Profiler *prof = new Profiler(5000);
+        thread inspect(do_inspect, inspector, &formatter, pid, pub, prof);
+
+
         thread profile(start_profiler, prof);
 
         pub->start();
