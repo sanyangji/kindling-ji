@@ -166,7 +166,7 @@ int main(int argc, char** argv) {
         publisher *pub = new publisher(inspector);
 
         TerminationHandler::set_sinsp(inspector);
-        Profiler *prof = new Profiler(5000);
+        Profiler *prof = new Profiler(5000, 10);
         thread inspect(do_inspect, inspector, &formatter, pid, pub, prof);
 
 
