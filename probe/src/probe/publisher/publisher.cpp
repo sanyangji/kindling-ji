@@ -39,14 +39,15 @@ void publisher::consume_sysdig_event(sinsp_evt *evt, int pid, converter *sysdigC
             return;
         }
     }
-    switch (evt->get_type()) {
-        case PPME_CPU_ANALYSIS_E:
-            cpu_convert(evt, cpuConverter);
-            break;
-        default:
-            default_sysdig_convert(evt, sysdigConverter);
+    if (m_selector->select(evt->get_type(), get_kindling_category(evt))) {
+        switch (evt->get_type()) {
+            case PPME_CPU_ANALYSIS_E:
+                cpu_convert(evt, cpuConverter);
+                break;
+            default:
+                default_sysdig_convert(evt, sysdigConverter);
+        }
     }
-    
 }
 void publisher::sysdig_convert_base(sinsp_evt *evt, converter *_conv) {
     auto it = m_kindlingEventLists.find(_conv);
@@ -75,10 +76,7 @@ void publisher::sysdig_convert_base(sinsp_evt *evt, converter *_conv) {
     }
 }
 void publisher::default_sysdig_convert(sinsp_evt *evt, converter *sysdigConverter) {
-    // convert sysdig event to kindling event
-    if (m_selector->select(evt->get_type(), get_kindling_category(evt))) {
-        sysdig_convert_base(evt, sysdigConverter);
-    }
+    sysdig_convert_base(evt, sysdigConverter);
 }
 
 void publisher::cpu_convert(sinsp_evt *evt, converter *cpuConverter) {

@@ -139,7 +139,6 @@ int main(int argc, char** argv) {
         try {
             inspector->open("");
             inspector->clear_eventmask();
-            inspector->set_eventmask(PPME_CPU_ANALYSIS_E);
         }
         catch (const sinsp_exception &e) {
             open_success = false;
