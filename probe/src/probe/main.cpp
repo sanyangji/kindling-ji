@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
         inspector->suppress_events_comm("containerd");
         inspector->suppress_events_comm("dockerd");
         inspector->suppress_events_comm("containerd-shim");
-        inspector->suppress_events_comm("kindling-collector");
+        inspector->suppress_events_comm("kindling-collec");
         inspector->suppress_events_comm("sshd");
 
         const char *probe = scap_get_bpf_probe_from_env();
