@@ -11,11 +11,6 @@ public:
     sysdig_converter(sinsp *inspector);
     sysdig_converter(sinsp *inspector, int batch_size, int max_size);
     ~sysdig_converter();
-    Category get_kindling_category(sinsp_evt *pEvt);
-    Source get_kindling_source(uint16_t etype);
-    L4Proto get_protocol(scap_l4_proto proto);
-    ValueType get_type(ppm_param_type type);
-    string get_kindling_name(sinsp_evt *pEvt);
 private:
     // set source, name, timestamp, category according to list
 	int init_kindling_event(kindling::KindlingEvent* kevt, sinsp_evt *sevt);
