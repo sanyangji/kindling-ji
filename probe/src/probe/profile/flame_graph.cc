@@ -153,17 +153,17 @@ void FlameGraph::CollectData(__u64 timestamp) {
         AggregateData *aggregateData = new AggregateData(0);
         sample_datas_->collect(last_collect_time_, timestamp, aggregateData, aggTidData);
         if (write_flame_graph_) {
-            fprintf(collect_file_, "%s\n", aggregateData->ToString().c_str());  // Write To File.
-            resetLogFile();
+            // fprintf(collect_file_, "%s\n", aggregateData->ToString().c_str());  // Write To File.
+            // resetLogFile();
         } else {
             aggregateData->ToString();
         }
     }
 
-    fprintf(stdout, "Before Exipre Size: %d\n", sample_datas_->size());
+    // fprintf(stdout, "Before Exipre Size: %d\n", sample_datas_->size());
     // Expire RingBuffer Datas.
     sample_datas_->expire(timestamp - flame_graph_ctx.cache_keep_time_);
-    fprintf(stdout, "After Exipre Size: %d\n", sample_datas_->size());
+    // fprintf(stdout, "After Exipre Size: %d\n", sample_datas_->size());
     last_collect_time_ = timestamp;
 }
 
@@ -176,7 +176,7 @@ string FlameGraph::GetOnCpuData(__u32 tid, vector<std::pair<uint64_t, uint64_t>>
         start_time = periods[i].first / 1000000; // ns->ms
         end_time = periods[i].second / 1000000; // ns->ms
         if (start_time < end_time) {
-            fprintf(stdout, ">> Collect: %lld -> %lld, Duration: %lld\n", start_time, end_time, end_time-start_time);
+            // fprintf(stdout, ">> Collect: %lld -> %lld, Duration: %lld\n", start_time, end_time, end_time-start_time);
             sample_datas_->collect(start_time, end_time, aggregateData, aggTidData);
         }
     }

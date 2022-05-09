@@ -21,10 +21,10 @@ void do_profile(__u64 timestamp, struct sample_type_data *sample_data) {
 }
 
 void do_collect(__u64 timestamp) {
-    char str[50];
-    time_t now = time(NULL);
-    strftime(str, 50, "%x %X", localtime(&now));
-    cout << "===== " << str << " =====" << endl;
+//    char str[50];
+//    time_t now = time(NULL);
+//    strftime(str, 50, "%x %X", localtime(&now));
+//    cout << "===== " << str << " =====" << endl;
     
     profile_ctx.flame_graph->CollectData(timestamp);
 }
