@@ -9,6 +9,7 @@
 #include <dirent.h>
 #include "src/probe/publisher/defination.h"
 #include "src/probe/converter/sysdig_converter.h"
+#include "src/probe/converter/utils.h"
 
 using namespace std;
 using namespace kindling;
@@ -75,7 +76,7 @@ void publisher::sysdig_convert_base(sinsp_evt *evt, converter *_conv) {
 }
 void publisher::default_sysdig_convert(sinsp_evt *evt, converter *sysdigConverter) {
     // convert sysdig event to kindling event
-    if (m_selector->select(evt->get_type(), ((sysdig_converter *) sysdigConverter)->get_kindling_category(evt))) {
+    if (m_selector->select(evt->get_type(), get_kindling_category(evt))) {
         sysdig_convert_base(evt, sysdigConverter);
     }
 }
