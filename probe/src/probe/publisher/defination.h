@@ -287,6 +287,7 @@ const static event kindling_to_sysdig[PPM_EVENT_MAX] = {
         {"kprobe-tcp_rcv_established",      PPME_TCP_RCV_ESTABLISHED_E},
         {"kprobe-tcp_drop",                 PPME_TCP_DROP_E},
         {"kprobe-tcp_retransmit_skb",       PPME_TCP_RETRANCESMIT_SKB_E},
+        {"tracepoint-cpu_analysis",         PPME_CPU_ANALYSIS_E},
 };
 
 struct event_category {
