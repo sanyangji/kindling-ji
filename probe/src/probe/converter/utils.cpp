@@ -3,6 +3,8 @@
 //
 
 #include "utils.h"
+#include <sys/time.h>
+#include <ctime>
 
 string get_kindling_name(sinsp_evt *evt) {
     return evt->get_name();
