@@ -179,7 +179,7 @@ string FlameGraph::GetOnCpuData(__u32 tid, vector<std::pair<uint64_t, uint64_t>>
         start_time = periods[i].first / flame_graph_ctx.perf_period_ns_; // ns->ms
         end_time = periods[i].second / flame_graph_ctx.perf_period_ns_; // ns->ms
         if (start_time < end_time) {
-            // fprintf(stdout, ">> Collect: %lld -> %lld, Duration: %lld\n", start_time, end_time, end_time-start_time);
+//             fprintf(stdout, ">> Collect: %lld -> %lld, Duration: %lld\n", start_time, end_time, end_time-start_time);
             sample_datas_->collect(start_time, end_time, aggregateData, aggTidData);
         }
     }

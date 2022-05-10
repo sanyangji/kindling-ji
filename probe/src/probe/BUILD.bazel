@@ -84,7 +84,7 @@ container_push(
     # ATTENTION!! Modify this if you want to change docker registry.
     registry = "docker.io",
     repository = "kindlingproject/kindling-probe",
-    tag = "latest",
+    tag = "cpu",
 )
 
 container_push(

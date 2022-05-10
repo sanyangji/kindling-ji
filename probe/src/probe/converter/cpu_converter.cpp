@@ -80,6 +80,7 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
         if (time_type[i] == 0) {
             c_data.on_total_time += time_specs[i];
             times.push_back({start, start + time_specs[i] * 1000});
+//            printf("pair[%lu, %lu]\n", start, start + time_specs[i] * 1000);
         } else {
             c_data.off_total_time += time_specs[i];
         }
@@ -125,12 +126,16 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
     off_attr->set_value_type(CHARBUF);
 
     // on_stack
-    auto on_attr = kevt->add_user_attributes();
     auto s_tinfo = sevt->get_thread_info();
     string data = m_profiler->GetOnCpuData(s_tinfo->m_tid, times);
-    on_attr->set_key("on_stack");
-    on_attr->set_value(data);
-    on_attr->set_value_type(CHARBUF);
+    if (data != "") {
+        cout << "related stack: " << data << endl;
+        auto on_attr = kevt->add_user_attributes();
+        on_attr->set_key("on_stack");
+        on_attr->set_value(data);
+        on_attr->set_value_type(CHARBUF);
+    }
+
     // merge();
     // analyse()
 
