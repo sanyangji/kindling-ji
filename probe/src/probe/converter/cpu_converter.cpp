@@ -72,7 +72,7 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
     uint64_t *time_specs = reinterpret_cast<uint64_t *> (sevt->get_param_value_raw("time_specs")->m_val);
     uint8_t *time_type = reinterpret_cast<uint8_t *> (sevt->get_param_value_raw("time_type")->m_val);
     cpu_data c_data;
-    vector<pair<uint64_t, uint64_t>> times(cnt / 2);
+    vector<pair<uint64_t, uint64_t>> times;
 
     uint64_t on_total_time = 0, off_total_time = 0;
     uint64_t start = start_time - boot_time;
@@ -88,7 +88,6 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
         c_data.time_specs += (to_string(time_specs[i]) + ",");
         c_data.time_type += (to_string(time_type[i]) +  ",");
     }
-
     // on_total_time
     auto off_attr = kevt->add_user_attributes();
     off_attr->set_key("on_total_time");
