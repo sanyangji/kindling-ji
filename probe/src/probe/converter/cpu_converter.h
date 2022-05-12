@@ -34,7 +34,6 @@ private:
     sinsp *m_inspector;
     Profiler *m_profiler;
     uint64_t sample_interval;
-    uint64_t boot_time;
     // on cpu_data
     // call m->get_data()
 };

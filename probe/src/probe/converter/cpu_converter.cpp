@@ -7,10 +7,7 @@
 using namespace std;
 using namespace kindling;
 
-cpu_converter::cpu_converter(sinsp *inspector, Profiler *prof, int batch_size, int max_size) : converter(batch_size, max_size), m_inspector(inspector), m_profiler(prof){
-    set_boot_time(&boot_time);
-    cout << "[cpu_converter], setting boot_time: " << boot_time << endl;
-}
+cpu_converter::cpu_converter(sinsp *inspector, Profiler *prof, int batch_size, int max_size) : converter(batch_size, max_size), m_inspector(inspector), m_profiler(prof){}
 
 cpu_converter::~cpu_converter() {}
 
@@ -75,12 +72,11 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
     vector<pair<uint64_t, uint64_t>> times;
 
     uint64_t on_total_time = 0, off_total_time = 0;
-    uint64_t start = start_time - boot_time;
+    uint64_t start = start_time;
     for (int i = 0; i < cnt; i++) {
         if (time_type[i] == 0) {
             c_data.on_total_time += time_specs[i];
             times.push_back({start, start + time_specs[i] * 1000});
-//            printf("pair[%lu, %lu]\n", start, start + time_specs[i] * 1000);
         } else {
             c_data.off_total_time += time_specs[i];
         }
@@ -139,30 +135,4 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
     // analyse()
 
     return 0;
-}
-
-int32_t cpu_converter::set_boot_time(uint64_t *boot_time)
-{
-	struct timespec ts_uptime;
-	struct timeval tv_now;
-	uint64_t now;
-	uint64_t uptime;
-
-	if(gettimeofday(&tv_now, NULL))
-	{
-		return -1;
-	}
-
-	now = tv_now.tv_sec * (uint64_t) 1000000000 + tv_now.tv_usec * 1000;
-
-	if(clock_gettime(CLOCK_BOOTTIME, &ts_uptime))
-	{
-		return -1;
-	}
-
-	uptime = ts_uptime.tv_sec * (uint64_t) 1000000000 + ts_uptime.tv_nsec;
-
-	*boot_time = now - uptime;
-
-	return 0;
 }
