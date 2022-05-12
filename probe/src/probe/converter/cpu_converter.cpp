@@ -121,12 +121,15 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
     off_attr->set_value_type(CHARBUF);
 
     // on_stack
-    auto on_attr = kevt->add_user_attributes();
+
     auto s_tinfo = sevt->get_thread_info();
     string data = m_profiler->GetOnCpuData(s_tinfo->m_tid, times);
-    on_attr->set_key("on_stack");
-    on_attr->set_value(data);
-    on_attr->set_value_type(CHARBUF);
+    if (data != "") {
+        auto on_attr = kevt->add_user_attributes();
+        on_attr->set_key("on_stack");
+        on_attr->set_value(data);
+        on_attr->set_value_type(CHARBUF);
+    }
     // merge();
     // analyse()
 
