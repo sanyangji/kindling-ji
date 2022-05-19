@@ -2,6 +2,7 @@
 #define CPU_CONVERTER_H
 #include "src/probe/converter/converter.h"
 #include "src/probe/profile/profiler.h"
+#include "src/probe/log/log_info.h"
 #include <string>
 #include <map>
 #include "sinsp.h"
@@ -20,7 +21,7 @@ public:
 class cpu_converter : public converter
 {
 public:
-    cpu_converter(sinsp *inspector, Profiler *prof, int batch_size, int max_size);
+    cpu_converter(sinsp *inspector, Profiler *prof, LogCache *log, int batch_size, int max_size);
     ~cpu_converter();
     void convert(void *evt);
     map<uint32_t, cpu_data> cpu_cache;
@@ -33,9 +34,8 @@ private:
 
     sinsp *m_inspector;
     Profiler *m_profiler;
+    LogCache *m_log;
     uint64_t sample_interval;
-    // on cpu_data
-    // call m->get_data()
 };
 
 #endif //CPU_CONVERTER_H

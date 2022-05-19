@@ -7,7 +7,7 @@
 using namespace std;
 using namespace kindling;
 
-cpu_converter::cpu_converter(sinsp *inspector, Profiler *prof, int batch_size, int max_size) : converter(batch_size, max_size), m_inspector(inspector), m_profiler(prof){}
+cpu_converter::cpu_converter(sinsp *inspector, Profiler *prof, LogCache *log, int batch_size, int max_size) : converter(batch_size, max_size), m_inspector(inspector), m_profiler(prof), m_log(log){}
 
 cpu_converter::~cpu_converter() {}
 
@@ -130,7 +130,14 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
         on_attr->set_value(data);
         on_attr->set_value_type(CHARBUF);
     }
-
+    auto log_msg = m_log->getLogs(s_tinfo->m_tid, times);
+    if (log_msg != "") {
+        cout << "related log: " << log_msg << endl;
+        auto log_attr = kevt->add_user_attributes();
+        log_attr->set_key("log");
+        log_attr->set_value(log_msg);
+        log_attr->set_value_type(CHARBUF);
+    }
     // merge();
     // analyse()
 

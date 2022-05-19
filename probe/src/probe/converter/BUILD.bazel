@@ -35,5 +35,6 @@ pl_cc_library(
         "//third_party:agent-libs_build",
         "@px//:px_headers",
         "//src/probe/profile:cc_library",
+        "//src/probe/log:cc_library",
     ],
 )

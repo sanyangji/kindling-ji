@@ -29,7 +29,7 @@ void do_inspect(sinsp *inspector, sinsp_evt_formatter *formatter, int pid, publi
     sinsp_evt *ev;
     string line;
     converter *sysdigConverter = new sysdig_converter(inspector, FLAGS_list_batch_size, FLAGS_list_max_size);
-    converter *cpuConverter = new cpu_converter(inspector, prof, FLAGS_list_batch_size, FLAGS_list_max_size);
+    converter *cpuConverter = new cpu_converter(inspector, prof, log, FLAGS_list_batch_size, FLAGS_list_max_size);
     while (true) {
         res = inspector->next(&ev);
         if (res == SCAP_TIMEOUT) {
