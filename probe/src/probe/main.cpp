@@ -10,6 +10,7 @@
 #include "src/probe/publisher/publisher.h"
 #include "src/probe/converter/kindling_event.pb.h"
 #include "src/probe/profile/profiler.h"
+#include "src/probe/log/log_info.h"
 #include "driver/driver_config.h"
 #include "src/common/base/base.h"
 #include "src/probe/catch_sig.h"
@@ -23,7 +24,7 @@ DEFINE_int32(sysdig_filter_out_pid_event, -1, "When sysdig_output is true, sysdi
 DEFINE_bool(sysdig_bpf, true, "If true, sysdig will use eBPF mode");
 
 #define KINDLING_PROBE_VERSION "v0.1-2021-1221"
-void do_inspect(sinsp *inspector, sinsp_evt_formatter *formatter, int pid, publisher* pub, Profiler *prof) {
+void do_inspect(sinsp *inspector, sinsp_evt_formatter *formatter, int pid, publisher* pub, Profiler *prof, LogCache *log) {
     int32_t res;
     sinsp_evt *ev;
     string line;
@@ -60,6 +61,7 @@ void do_inspect(sinsp *inspector, sinsp_evt_formatter *formatter, int pid, publi
         }
 
         pub->consume_sysdig_event(ev, threadInfo->m_pid, sysdigConverter, cpuConverter);
+        log->addLog(ev);
         if (FLAGS_sysdig_output && (FLAGS_sysdig_filter_out_pid_event == -1 || FLAGS_sysdig_filter_out_pid_event == threadInfo->m_pid)) {
             if (formatter->tostring(ev, &line)) {
                 cout<< line << endl;
@@ -163,11 +165,14 @@ int main(int argc, char** argv) {
         }
         thread catch_signal(sigsetup);
         thread stat(get_capture_statistics, inspector);
+
+        LogCache *log = new LogCache(10000, 5);
         publisher *pub = new publisher(inspector);
 
         TerminationHandler::set_sinsp(inspector);
+
         Profiler *prof = new Profiler(5000, 10);
-        thread inspect(do_inspect, inspector, &formatter, pid, pub, prof);
+        thread inspect(do_inspect, inspector, &formatter, pid, pub, prof, log);
 
 
         thread profile(start_profiler, prof);
