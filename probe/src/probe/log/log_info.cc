@@ -14,7 +14,7 @@ void LogData::setData(long ts, int64_t size, __u32 tid, char* data) {
     tid_ = tid;
     data_ = data;
 
-    fprintf(stdout, "[Add Log] Time: %ld, Tid: %d, Data(%ld): %s\n", ts, tid, size, data);
+    //fprintf(stdout, "[Add Log] Time: %ld, Tid: %d, Data(%ld): %s\n", ts, tid, size, data);
 }
 
 long LogData::getTs() {
@@ -65,7 +65,7 @@ void LogDatas::CollectLogs(void* data) {
     if (log_data->getTid() != tid_) {
         return;
     }
-    fprintf(stdout, "Collect Log: %s\n", log_data->getData().c_str());
+    //fprintf(stdout, "Collect Log: %s\n", log_data->getData().c_str());
     // TODO log is split to 2 logs.
     logs_.push_back(log_data->getData());
 }
@@ -150,5 +150,5 @@ string LogCache::getLogs(__u32 tid, vector<std::pair<uint64_t, uint64_t>> &perio
         }
         logDatas->Reset();
     }
-    return result;
+    return result.length() == periods.size() * 3 ? "" : result;
 }
