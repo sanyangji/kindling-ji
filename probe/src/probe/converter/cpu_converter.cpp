@@ -7,9 +7,70 @@
 using namespace std;
 using namespace kindling;
 
-cpu_converter::cpu_converter(sinsp *inspector, Profiler *prof, LogCache *log, int batch_size, int max_size) : converter(batch_size, max_size), m_inspector(inspector), m_profiler(prof), m_log(log){}
+cpu_converter::cpu_converter(sinsp *inspector, Profiler *prof, LogCache *log, int batch_size, int max_size) : converter(batch_size, max_size), m_inspector(inspector), m_profiler(prof), m_log(log) {
+    file_cache = new event_cache(1);
+    net_cache = new event_cache(2);
+}
 
 cpu_converter::~cpu_converter() {}
+
+bool cpu_converter::Cache(sinsp_evt *sevt) {
+    file_info info;
+    auto type = sevt->get_type();
+    sinsp_evt::category cat;
+    sevt->get_category(&cat);
+    if (!(cat.m_category & EC_IO_BASE)) {
+        return false;
+    }
+    auto s_tinfo = sevt->get_thread_info();
+    auto s_fdinfo = sevt->get_fd_info();
+    if (s_fdinfo == nullptr) {
+        return false;
+    }
+    if (PPME_IS_ENTER(type)) {
+        switch (s_fdinfo->m_type) {
+            case SCAP_FD_FILE:
+            case SCAP_FD_FILE_V2:
+            case SCAP_FD_IPV4_SOCK:
+            case SCAP_FD_IPV4_SERVSOCK: {
+                info.start_time = sevt->get_ts();
+                info.name = s_fdinfo->m_name;
+                auto psize = sevt->get_param_value_raw("size");
+                if (!psize || *(uint32_t *) psize->m_val <= 0) {
+                    return false;
+                }
+                info.size = *(uint32_t *) psize->m_val;
+                info.operation_type = (cat.m_category & EC_IO_WRITE) ? "write" : "read";
+                break;
+            }
+            default:
+                return false;
+        }
+    } else {
+        switch (s_fdinfo->m_type) {
+            case SCAP_FD_FILE:
+            case SCAP_FD_FILE_V2:
+            case SCAP_FD_IPV4_SOCK:
+            case SCAP_FD_IPV4_SERVSOCK: {
+                info.end_time = sevt->get_ts();
+                break;
+            }
+            default:
+                return false;
+        }
+    }
+    switch (s_fdinfo->m_type) {
+		case SCAP_FD_FILE:
+        case SCAP_FD_FILE_V2:
+            return file_cache->setInfo(s_tinfo->m_tid, info);
+        case SCAP_FD_IPV4_SOCK:
+        case SCAP_FD_IPV4_SERVSOCK: {
+            return net_cache->setInfo(s_tinfo->m_tid, info);
+        }
+        default:
+            return false;
+    }
+}
 
 void cpu_converter::convert(void *evt)
 {
@@ -69,16 +130,18 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
     uint64_t *time_specs = reinterpret_cast<uint64_t *> (sevt->get_param_value_raw("time_specs")->m_val);
     uint8_t *time_type = reinterpret_cast<uint8_t *> (sevt->get_param_value_raw("time_type")->m_val);
     cpu_data c_data;
-    vector<pair<uint64_t, uint64_t>> times;
-
+    vector<pair<uint64_t, uint64_t>> on_time, off_time;
+    vector<uint8_t> off_type;
     uint64_t on_total_time = 0, off_total_time = 0;
     uint64_t start = start_time;
     for (int i = 0; i < cnt; i++) {
         if (time_type[i] == 0) {
             c_data.on_total_time += time_specs[i];
-            times.push_back({start, start + time_specs[i] * 1000});
+            on_time.push_back({start, start + time_specs[i] * 1000});
         } else {
             c_data.off_total_time += time_specs[i];
+            off_time.push_back({start, start + time_specs[i] * 1000});
+            off_type.push_back(time_type[i]);
         }
         start = start + time_specs[i] * 1000;
         c_data.time_specs += (to_string(time_specs[i]) + ",");
@@ -122,7 +185,7 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
 
     // on_stack
     auto s_tinfo = sevt->get_thread_info();
-    string data = m_profiler->GetOnCpuData(s_tinfo->m_tid, times);
+    string data = m_profiler->GetOnCpuData(s_tinfo->m_tid, on_time);
     if (data != "") {
         cout << "related stack: " << data << endl;
         auto on_attr = kevt->add_user_attributes();
@@ -130,7 +193,7 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
         on_attr->set_value(data);
         on_attr->set_value_type(CHARBUF);
     }
-    auto log_msg = m_log->getLogs(s_tinfo->m_tid, times);
+    auto log_msg = m_log->getLogs(s_tinfo->m_tid, on_time);
     if (log_msg != "") {
         cout << "related log: " << log_msg << endl;
         auto log_attr = kevt->add_user_attributes();
@@ -138,8 +201,25 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
         log_attr->set_value(log_msg);
         log_attr->set_value_type(CHARBUF);
     }
+    
+    auto file_info = file_cache->GetInfo(s_tinfo->m_tid, off_time, off_type);
+    if (file_info != "") {
+        cout << "related file info: " << file_info << endl;
+        auto file_attr = kevt->add_user_attributes();
+        file_attr->set_key("file_info");
+        file_attr->set_value(file_info);
+        file_attr->set_value_type(CHARBUF);
+    }
+
+    auto net_info = net_cache->GetInfo(s_tinfo->m_tid, off_time, off_type);
+    if (net_info != "") {
+        cout << "related net info: " << net_info << endl;
+        auto file_attr = kevt->add_user_attributes();
+        file_attr->set_key("net_info");
+        file_attr->set_value(net_info);
+        file_attr->set_value_type(CHARBUF);
+    }
     // merge();
     // analyse()
-
     return 0;
 }

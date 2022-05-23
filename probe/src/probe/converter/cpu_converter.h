@@ -3,6 +3,7 @@
 #include "src/probe/converter/converter.h"
 #include "src/probe/profile/profiler.h"
 #include "src/probe/log/log_info.h"
+#include "src/probe/converter/event_cache.h"
 #include <string>
 #include <map>
 #include "sinsp.h"
@@ -24,7 +25,7 @@ public:
     cpu_converter(sinsp *inspector, Profiler *prof, LogCache *log, int batch_size, int max_size);
     ~cpu_converter();
     void convert(void *evt);
-    map<uint32_t, cpu_data> cpu_cache;
+    bool Cache(sinsp_evt *evt);
 private:
     int init_kindling_event(kindling::KindlingEvent* kevt, sinsp_evt *sevt);
     int add_threadinfo(kindling::KindlingEvent* kevt, sinsp_evt *sevt);
@@ -36,6 +37,8 @@ private:
     Profiler *m_profiler;
     LogCache *m_log;
     uint64_t sample_interval;
+    event_cache *file_cache;
+    event_cache *net_cache;
 };
 
 #endif //CPU_CONVERTER_H

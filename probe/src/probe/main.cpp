@@ -50,7 +50,6 @@ void do_inspect(sinsp *inspector, sinsp_evt_formatter *formatter, int pid, publi
         if (threadInfo->m_ptid == (__int64_t) pid || threadInfo->m_pid == (__int64_t) pid || threadInfo->m_pid == 0) {
             continue;
         }
-
         // filter out io-related events that do not contain message
         auto category = ev->get_category();
         if (category & EC_IO_BASE) {
@@ -59,7 +58,7 @@ void do_inspect(sinsp *inspector, sinsp_evt_formatter *formatter, int pid, publi
                 continue;
             }
         }
-
+        dynamic_cast<cpu_converter *>(cpuConverter)->Cache(ev);
         pub->consume_sysdig_event(ev, threadInfo->m_pid, sysdigConverter, cpuConverter);
         log->addLog(ev);
         if (FLAGS_sysdig_output && (FLAGS_sysdig_filter_out_pid_event == -1 || FLAGS_sysdig_filter_out_pid_event == threadInfo->m_pid)) {
@@ -153,11 +152,11 @@ int main(int argc, char** argv) {
         if (!open_success) {
             if (bpf) {
                 if (bpf_probe.empty()) {
-                    fprintf(stderr, "Unable to locate the BPF probe\n");
+                    //fprintf(stderr, "Unable to locate the BPF probe\n");
                 }
             } else {
                 if (system("modprobe " PROBE_NAME " > /dev/null 2> /dev/null")) {
-                    fprintf(stderr, "Unable to load the driver\n");
+                    //fprintf(stderr, "Unable to load the driver\n");
                 }
             }
 
@@ -182,7 +181,7 @@ int main(int argc, char** argv) {
         inspector->close();
     }
     catch (const exception &e) {
-        fprintf(stderr, "kindling probe init err: %s", e.what());
+        //fprintf(stderr, "kindling probe init err: %s", e.what());
         return 1;
     }
     delete inspector;
