@@ -17,7 +17,7 @@
 static int libperf_print(enum libperf_print_level level,
                          const char *fmt, va_list ap)
 {
-    return vfprintf(stderr, fmt, ap);
+    return fprintf(stderr, fmt, ap);
 }
 
 static uint64_t time_ms(void)
@@ -29,7 +29,7 @@ static uint64_t time_ms(void)
 
 int perf(struct perfData *data) {
     if (data->running) {
-        fprintf(stdout, "Perf has already started, skip it...\n");
+        //fprintf(stdout, "Perf has already started, skip it...\n");
         return 0;
     }
 
@@ -58,19 +58,19 @@ int perf(struct perfData *data) {
 	libperf_init(libperf_print);
 	cpus = perf_cpu_map__new(NULL);
 	if (!cpus) {
-		fprintf(stderr, "failed to create cpus\n");
+		//fprintf(stderr, "failed to create cpus\n");
 		return -1;
 	}
 
 	evlist = perf_evlist__new();
 	if (!evlist) {
-		fprintf(stderr, "failed to create evlist\n");
+		//fprintf(stderr, "failed to create evlist\n");
 		goto out_cpus;
 	}
 
 	evsel = perf_evsel__new(&attr);
 	if (!evsel) {
-		fprintf(stderr, "failed to create cycles\n");
+		//fprintf(stderr, "failed to create cycles\n");
 		goto out_cpus;
 	}
 
@@ -78,13 +78,13 @@ int perf(struct perfData *data) {
 	perf_evlist__set_maps(evlist, cpus, NULL);
 	err = perf_evlist__open(evlist);
 	if (err) {
-		fprintf(stderr, "failed to open evlist\n");
+		//fprintf(stderr, "failed to open evlist\n");
 		goto out_evlist;
 	}
 
 	err = perf_evlist__mmap(evlist, 4);
 	if (err) {
-		fprintf(stderr, "failed to mmap evlist\n");
+		//fprintf(stderr, "failed to mmap evlist\n");
 		goto out_evlist;
 	}
 
@@ -92,7 +92,7 @@ int perf(struct perfData *data) {
     
     data->running = 1;
 
-    fprintf(stdout, "Start Perf...\n");
+    //fprintf(stdout, "Start Perf...\n");
     time_end = time_ms() + data->collectMs;
     time_left = data->collectMs;
     while (data->running) {
@@ -133,6 +133,6 @@ out_evlist:
 out_cpus:
 	perf_cpu_map__put(cpus);
 
-    fprintf(stdout, "End Perf...\n");
+    //fprintf(stdout, "End Perf...\n");
 	return err;
 }

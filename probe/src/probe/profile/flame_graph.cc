@@ -159,10 +159,10 @@ void FlameGraph::SetFilterThreshold(int filter_threshold) {
 
 void FlameGraph::RecordSampleData(struct sample_type_data *sample_data) {
     if (sample_data->callchain.nr > 256) {
-        fprintf(stdout, "[Ignore Sample Data] Pid: %d, Tid: %d, Nr: %lld\n",sample_data->tid_entry.pid, sample_data->tid_entry.tid, sample_data->callchain.nr);
+        //fprintf(stdout, "[Ignore Sample Data] Pid: %d, Tid: %d, Nr: %lld\n",sample_data->tid_entry.pid, sample_data->tid_entry.tid, sample_data->callchain.nr);
         return;
     }
-    last_sample_time_ = sample_datas_->add(last_sample_time_, sample_data, setSampleData);
+    last_sample_time_ = sample_datas_->add(sample_data->time, sample_data, setSampleData);
 }
 
 void FlameGraph::CollectData() {
@@ -170,7 +170,7 @@ void FlameGraph::CollectData() {
         AggregateData *aggregateData = new AggregateData(0);
         sample_datas_->collect(last_collect_time_, last_sample_time_, aggregateData, aggTidData);
         if (write_flame_graph_) {
-            fprintf(collect_file_, "%s\n", aggregateData->ToString().c_str());  // Write To File.
+            //fprintf(collect_file_, "%s\n", aggregateData->ToString().c_str());  // Write To File.
             fclose(collect_file_);
             resetLogFile();
         } else {
@@ -178,10 +178,10 @@ void FlameGraph::CollectData() {
         }
     }
 
-    fprintf(stdout, "Before Exipre Size: %d\n", sample_datas_->size());
+    //fprintf(stdout, "Before Exipre Size: %d\n", sample_datas_->size());
     // Expire BucketRingBuffers Datas.
     sample_datas_->expire(last_sample_time_ - cache_keep_time_);
-    fprintf(stdout, "After Exipre Size: %d\n", sample_datas_->size());
+    //fprintf(stdout, "After Exipre Size: %d\n", sample_datas_->size());
     last_collect_time_ = last_sample_time_;
 }
 
@@ -196,7 +196,7 @@ string FlameGraph::GetOnCpuData(__u32 tid, vector<std::pair<uint64_t, uint64_t>>
             start_time = periods[i].first / perf_period_ns_; // ns->ms
             end_time = periods[i].second / perf_period_ns_; // ns->ms
 
-            fprintf(stdout, ">> Collect: %lld -> %lld, Duration: %lld, Exist Data %ld -> %ld\n", start_time, end_time, end_time-start_time, sample_datas_->getFrom(), sample_datas_->getTo());
+            //fprintf(stdout, ">> Collect: %lld -> %lld, Duration: %lld, Exist Data %ld -> %ld\n", start_time, end_time, end_time-start_time, sample_datas_->getFrom(), sample_datas_->getTo());
             sample_datas_->collect(start_time, end_time, aggregateData, aggTidData);
             result.append(aggregateData->ToString());
             aggregateData->Reset();
