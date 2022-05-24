@@ -17,19 +17,22 @@ bool event_cache::setInfo(uint32_t tid, info_base &info) {
     } else {
         auto list = it->second;
 //        list_lock.lock();
-        auto it = list->rbegin();
-        if (it != list->rend()){
+        auto r_it = list->rbegin();
+        if (r_it != list->rend()) {
             // update exit event
-            if (it->exit == false) {
-                it->end_time = info.end_time;
-                it->exit = true;
-            } else { // new event
-                list->emplace_back(std::move(info));
+            if (r_it->exit == false) {
+                // pair-event
+                if (info.exit == true && r_it->event_type == info.event_type - 1) {
+                    r_it->end_time = info.end_time;
+                    r_it->exit = true;
+                } else { // lost exit event
+                    list->erase((++r_it).base());
+                }
             }
-        } else { // empty list
+        }
+        if (info.exit == false) {
             list->emplace_back(std::move(info));
         }
-        //std::cout << "current size: " << list->size() << std::endl;
         if (list->size() > 0) {
             //std::cout << "latest event: " << tid << " " << list->back().toStringTs() << std::endl;
         }

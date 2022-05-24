@@ -18,10 +18,11 @@ public:
     }
     uint64_t start_time;
     uint64_t end_time;
+    bool exit;
+    uint16_t event_type;
     string name;
     uint32_t size;
     string operation_type;
-    bool exit;
     string toString() {
         return operation_type + "#" + name + "#" + to_string(size);
     }

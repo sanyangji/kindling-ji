@@ -17,6 +17,7 @@ cpu_converter::~cpu_converter() {}
 bool cpu_converter::Cache(sinsp_evt *sevt) {
     file_info info;
     auto type = sevt->get_type();
+    info.event_type = static_cast<uint16_t>(type);
     sinsp_evt::category cat;
     sevt->get_category(&cat);
     if (!(cat.m_category == EC_IO_WRITE || cat.m_category == EC_IO_READ)) {
