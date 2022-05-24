@@ -9,7 +9,7 @@ bool event_cache::setInfo(uint32_t tid, info_base &info) {
     //std::cout << "try to set: " << info.toStringTs() << std::endl;
     auto it = cache.find(tid);
     if (it == cache.end()) {
-        if (info.start_time != 0) {
+        if (info.exit == false) { // skip the first exit one
             auto list = new std::list<info_base>();
             list->emplace_back(std::move(info));
             cache[tid] = list;

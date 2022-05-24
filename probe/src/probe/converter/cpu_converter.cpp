@@ -19,7 +19,7 @@ bool cpu_converter::Cache(sinsp_evt *sevt) {
     auto type = sevt->get_type();
     sinsp_evt::category cat;
     sevt->get_category(&cat);
-    if (!(cat.m_category & EC_IO_BASE)) {
+    if (!(cat.m_category == EC_IO_WRITE || cat.m_category == EC_IO_READ)) {
         return false;
     }
     auto s_tinfo = sevt->get_thread_info();
@@ -40,7 +40,7 @@ bool cpu_converter::Cache(sinsp_evt *sevt) {
                     return false;
                 }
                 info.size = *(uint32_t *) psize->m_val;
-                info.operation_type = (cat.m_category & EC_IO_WRITE) ? "write" : "read";
+                info.operation_type = (cat.m_category == EC_IO_READ) ? "read" : "write";
                 break;
             }
             default:
@@ -53,6 +53,7 @@ bool cpu_converter::Cache(sinsp_evt *sevt) {
             case SCAP_FD_IPV4_SOCK:
             case SCAP_FD_IPV4_SERVSOCK: {
                 info.end_time = sevt->get_ts();
+                info.exit = true;
                 break;
             }
             default:
@@ -187,7 +188,7 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
     auto s_tinfo = sevt->get_thread_info();
     string data = m_profiler->GetOnCpuData(s_tinfo->m_tid, on_time);
     if (data != "") {
-        cout << "related stack: " << data << endl;
+        // LOG(INFO) << "related stack: " << data;
         auto on_attr = kevt->add_user_attributes();
         on_attr->set_key("on_stack");
         on_attr->set_value(data);
@@ -195,16 +196,16 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
     }
     auto log_msg = m_log->getLogs(s_tinfo->m_tid, on_time);
     if (log_msg != "") {
-        cout << "related log: " << log_msg << endl;
+        // LOG(INFO) << "related log: " << log_msg;
         auto log_attr = kevt->add_user_attributes();
         log_attr->set_key("log");
         log_attr->set_value(log_msg);
         log_attr->set_value_type(CHARBUF);
     }
-    
+
     auto file_info = file_cache->GetInfo(s_tinfo->m_tid, off_time, off_type);
     if (file_info != "") {
-        cout << "related file info: " << file_info << endl;
+        // LOG(INFO) << "related file info: " << file_info;
         auto file_attr = kevt->add_user_attributes();
         file_attr->set_key("file_info");
         file_attr->set_value(file_info);
@@ -213,7 +214,7 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
 
     auto net_info = net_cache->GetInfo(s_tinfo->m_tid, off_time, off_type);
     if (net_info != "") {
-        cout << "related net info: " << net_info << endl;
+        // LOG(INFO) << "related net info: " << net_info;
         auto file_attr = kevt->add_user_attributes();
         file_attr->set_key("net_info");
         file_attr->set_value(net_info);
