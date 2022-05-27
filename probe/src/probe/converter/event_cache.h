@@ -43,13 +43,17 @@ public:
 
 class event_cache {
 public:
-    event_cache(uint8_t type) : event_type(type) {}
+    event_cache(uint8_t type) : event_type(type) {
+        threshold = 0;
+    }
     string GetInfo(uint32_t tid, vector<pair<uint64_t, uint64_t>> &periods, vector<uint8_t> &off_type);
+    bool setThreshold(uint64_t thres);
     bool setInfo(uint32_t tid, info_base &info);
     bool send();
 private:
     std::mutex list_lock;
     unordered_map<uint32_t, list<info_base>* > cache;
     uint8_t event_type;
+    std::atomic_ullong threshold;
 };
 #endif //KINDLING_EVENT_CACHE_H

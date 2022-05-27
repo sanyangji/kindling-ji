@@ -12,7 +12,10 @@ cpu_converter::cpu_converter(sinsp *inspector, Profiler *prof, LogCache *log, in
     net_cache = new event_cache(2);
 }
 
-cpu_converter::~cpu_converter() {}
+cpu_converter::~cpu_converter() {
+    delete file_cache;
+    delete net_cache;
+}
 
 bool cpu_converter::Cache(sinsp_evt *sevt) {
     file_info info;

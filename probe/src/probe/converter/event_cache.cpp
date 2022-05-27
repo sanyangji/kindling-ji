@@ -22,7 +22,7 @@ bool event_cache::setInfo(uint32_t tid, info_base &info) {
             // update exit event
             if (r_it->exit == false) {
                 // pair-event
-                if (info.exit == true && r_it->event_type == info.event_type - 1) {
+                if (info.exit == true && r_it->event_type == info.event_type - 1 && info.end_time - r_it->start_time > threshold) {
                     r_it->end_time = info.end_time;
                     r_it->exit = true;
                 } else { // lost exit event
@@ -63,9 +63,9 @@ string event_cache::GetInfo(uint32_t tid, vector<pair<uint64_t, uint64_t>> &peri
             f = list->erase(f);
         }
         // 搜索 start_time < off.start < end_time
-        // 判断 if off.end < end_time result.append()
+        // 判断 if off.end < end_time && off.end - start_time > threshold -> result.append()
         if (f != list->end()) {
-            if (f->start_time < period.first && period.second < f->end_time) {
+            if (f->start_time < period.first && period.second < f->end_time && period.second - f->start_time > threshold) {
                 result.append(f->toString());
             }
         }
@@ -73,4 +73,9 @@ string event_cache::GetInfo(uint32_t tid, vector<pair<uint64_t, uint64_t>> &peri
         result.append("|");
     }
     return result.length() != periods.size() ? result : "";
+}
+
+bool event_cache::setThreshold(uint64_t threshold_ms) {
+    threshold = threshold_ms * 1000000;
+    return true;
 }
