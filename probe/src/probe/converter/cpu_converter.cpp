@@ -133,11 +133,11 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
     uint64_t end_time = *reinterpret_cast<uint64_t*> (sevt->get_param_value_raw("end_ts")->m_val);
     uint32_t cnt = *reinterpret_cast<uint32_t*> (sevt->get_param_value_raw("cnt")->m_val);
     uint64_t *time_specs = reinterpret_cast<uint64_t *> (sevt->get_param_value_raw("time_specs")->m_val);
+    uint64_t *runq_latency = reinterpret_cast<uint64_t *> (sevt->get_param_value_raw("runq_latency")->m_val);
     uint8_t *time_type = reinterpret_cast<uint8_t *> (sevt->get_param_value_raw("time_type")->m_val);
     cpu_data c_data;
     vector<pair<uint64_t, uint64_t>> on_time, off_time;
     vector<uint8_t> off_type;
-    uint64_t on_total_time = 0, off_total_time = 0;
     uint64_t start = start_time;
     for (int i = 0; i < cnt; i++) {
         if (time_type[i] == 0) {
@@ -145,6 +145,7 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
             on_time.push_back({start, start + time_specs[i] * 1000});
         } else {
             c_data.off_total_time += time_specs[i];
+            c_data.runq_latency += (to_string(runq_latency[i/2]) + ",");
             off_time.push_back({start, start + time_specs[i] * 1000});
             off_type.push_back(time_type[i]);
         }
@@ -182,6 +183,12 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
     off_attr->set_value(c_data.time_specs);
     off_attr->set_value_type(CHARBUF);
 
+    // runq_latency
+    off_attr = kevt->add_user_attributes();
+    off_attr->set_key("runq_latency");
+    off_attr->set_value(c_data.runq_latency);
+    off_attr->set_value_type(CHARBUF);
+
     // time_type
     off_attr = kevt->add_user_attributes();
     off_attr->set_key("time_type");
@@ -194,7 +201,7 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
     if (data != "") {
         // LOG(INFO) << "related stack: " << data;
         auto on_attr = kevt->add_user_attributes();
-        on_attr->set_key("on_stack");
+        on_attr->set_key("stack");
         on_attr->set_value(data);
         on_attr->set_value_type(CHARBUF);
     }

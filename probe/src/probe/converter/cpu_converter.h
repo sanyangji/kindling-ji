@@ -14,7 +14,7 @@ public:
     uint64_t on_total_time;
     uint64_t off_total_time;
     string time_specs;
-    string on_stack;
+    string runq_latency;
     string time_type;
     uint32_t tid;
 };
