@@ -23,10 +23,14 @@ bool cpu_converter::Cache(sinsp_evt *sevt) {
     info.event_type = static_cast<uint16_t>(type);
     sinsp_evt::category cat;
     sevt->get_category(&cat);
+    auto s_tinfo = sevt->get_thread_info();
+    if (type == PPME_PROCEXIT_1_E || type == PPME_PROCEXIT_E) {
+        net_cache->clearList(s_tinfo->m_tid);
+        file_cache->clearList(s_tinfo->m_tid);
+    }
     if (!(cat.m_category == EC_IO_WRITE || cat.m_category == EC_IO_READ)) {
         return false;
     }
-    auto s_tinfo = sevt->get_thread_info();
     auto s_fdinfo = sevt->get_fd_info();
     if (s_fdinfo == nullptr) {
         return false;

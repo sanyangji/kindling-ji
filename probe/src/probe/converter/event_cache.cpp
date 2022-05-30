@@ -31,10 +31,15 @@ bool event_cache::setInfo(uint32_t tid, info_base &info) {
             }
         }
         if (info.exit == false) {
+            if (list->size() >= list_max_size) {
+                list->pop_front();
+            }
             list->emplace_back(std::move(info));
         }
         if (list->size() > 0) {
-            //std::cout << "latest event: " << tid << " " << list->back().toStringTs() << std::endl;
+//            std::cout << "tid " << tid << " :" <<list->size() << std::endl;
+//            std::cout << "first event: " << tid << " " << list->front().toStringTs() << std::endl;
+//            std::cout << "latest event: " << tid << " " << list->back().toStringTs() << std::endl;
         }
 //        list_lock.unlock();
     }
@@ -77,5 +82,16 @@ string event_cache::GetInfo(uint32_t tid, vector<pair<uint64_t, uint64_t>> &peri
 
 bool event_cache::setThreshold(uint64_t threshold_ms) {
     threshold = threshold_ms * 1000000;
+    return true;
+}
+
+bool event_cache::clearList(uint32_t tid) {
+    auto it = cache.find(tid);
+    if (it != cache.end()) {
+        if (it->second) {
+            delete it->second;
+        }
+        cache.erase(it);
+    }
     return true;
 }

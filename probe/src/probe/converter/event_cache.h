@@ -50,10 +50,12 @@ public:
     bool setThreshold(uint64_t thres);
     bool setInfo(uint32_t tid, info_base &info);
     bool send();
+    bool clearList(uint32_t tid);
 private:
     std::mutex list_lock;
     unordered_map<uint32_t, list<info_base>* > cache;
     uint8_t event_type;
     std::atomic_ullong threshold;
+    uint32_t list_max_size = 128;
 };
 #endif //KINDLING_EVENT_CACHE_H
