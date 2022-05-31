@@ -11,7 +11,7 @@ bool event_cache::setInfo(uint32_t tid, info_base &info) {
     if (it == cache.end()) {
         if (info.exit == false) { // skip the first exit one
             auto list = new std::list<info_base>();
-            list->emplace_back(std::move(info));
+             list->emplace_back(info);
             cache[tid] = list;
         }
     } else {
@@ -34,7 +34,7 @@ bool event_cache::setInfo(uint32_t tid, info_base &info) {
             if (list->size() >= list_max_size) {
                 list->pop_front();
             }
-            list->emplace_back(std::move(info));
+             list->emplace_back(info);
         }
         if (list->size() > 0) {
 //            std::cout << "tid " << tid << " :" <<list->size() << std::endl;
@@ -62,6 +62,7 @@ string event_cache::GetInfo(uint32_t tid, vector<pair<uint64_t, uint64_t>> &peri
         //std::cout << "query info: " << period.first << "->" << period.second << std::endl;
 
 //        list_lock.lock();
+//        std::cout << "before size: " << list->size() << std::endl;
         auto f = list->begin();
         // clear: end_time  <  off.start
         while (f != list->end() && f->end_time < period.first) {
@@ -76,7 +77,9 @@ string event_cache::GetInfo(uint32_t tid, vector<pair<uint64_t, uint64_t>> &peri
         }
 //        list_lock.unlock();
         result.append("|");
+//        std::cout << "after size: " << list->size() << std::endl;
     }
+//    std::cout << "Get tid " << tid << "current map size: " << cache.size() <<endl;
     return result.length() != periods.size() ? result : "";
 }
 
@@ -91,6 +94,7 @@ bool event_cache::clearList(uint32_t tid) {
         if (it->second) {
             delete it->second;
         }
+        std::cout << "Clear tid " << tid << "current map size: " << cache.size() <<endl;
         cache.erase(it);
     }
     return true;
