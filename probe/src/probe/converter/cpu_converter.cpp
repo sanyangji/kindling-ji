@@ -10,23 +10,28 @@ using namespace kindling;
 cpu_converter::cpu_converter(sinsp *inspector, Profiler *prof, LogCache *log, int batch_size, int max_size) : converter(batch_size, max_size), m_inspector(inspector), m_profiler(prof), m_log(log) {
     file_cache = new event_cache(1);
     net_cache = new event_cache(2);
+    epoll_cache = new epoll_event_cache(4);
 }
 
 cpu_converter::~cpu_converter() {
     delete file_cache;
     delete net_cache;
+    delete epoll_cache;
 }
 
 bool cpu_converter::Cache(sinsp_evt *sevt) {
-    file_info info;
+    info_base *info = nullptr;
     auto type = sevt->get_type();
-    info.event_type = static_cast<uint16_t>(type);
+    if (type == PPME_SYSCALL_EPOLLWAIT_X) {
+        return epoll_cache->setInfo(sevt);
+    }
     sinsp_evt::category cat;
     sevt->get_category(&cat);
     auto s_tinfo = sevt->get_thread_info();
     if (type == PPME_PROCEXIT_1_E || type == PPME_PROCEXIT_E) {
         net_cache->clearList(s_tinfo->m_tid);
         file_cache->clearList(s_tinfo->m_tid);
+        epoll_cache->clearList(s_tinfo->m_tid);
     }
     if (!(cat.m_category == EC_IO_WRITE || cat.m_category == EC_IO_READ)) {
         return false;
@@ -38,17 +43,31 @@ bool cpu_converter::Cache(sinsp_evt *sevt) {
     if (PPME_IS_ENTER(type)) {
         switch (s_fdinfo->m_type) {
             case SCAP_FD_FILE:
-            case SCAP_FD_FILE_V2:
-            case SCAP_FD_IPV4_SOCK:
-            case SCAP_FD_IPV4_SERVSOCK: {
-                info.start_time = sevt->get_ts();
-                info.name = s_fdinfo->m_name;
+            case SCAP_FD_FILE_V2: {
+                info = new file_info();
+                info->start_time = sevt->get_ts();
+                info->name = s_fdinfo->m_name;
                 auto psize = sevt->get_param_value_raw("size");
                 if (!psize || *(uint32_t *) psize->m_val <= 0) {
                     return false;
                 }
-                info.size = *(uint32_t *) psize->m_val;
-                info.operation_type = (cat.m_category == EC_IO_READ) ? "read" : "write";
+                info->size = *(uint32_t *) psize->m_val;
+                info->operation_type = (cat.m_category == EC_IO_READ) ? "read" : "write";
+                break;
+            }
+            case SCAP_FD_IPV4_SOCK:
+            case SCAP_FD_IPV4_SERVSOCK: {
+                info = new net_info();
+                info->start_time = sevt->get_ts();
+                info->name = s_fdinfo->m_name;
+                auto psize = sevt->get_param_value_raw("size");
+                if (!psize || *(uint32_t *) psize->m_val <= 0) {
+                    return false;
+                }
+                info->size = *(uint32_t *) psize->m_val;
+                info->operation_type = (cat.m_category == EC_IO_READ) ? "read" : "write";
+
+                epoll_cache->SetLastEpollCache(s_tinfo->m_tid, sevt->get_fd_num(), info);
                 break;
             }
             default:
@@ -57,17 +76,24 @@ bool cpu_converter::Cache(sinsp_evt *sevt) {
     } else {
         switch (s_fdinfo->m_type) {
             case SCAP_FD_FILE:
-            case SCAP_FD_FILE_V2:
+            case SCAP_FD_FILE_V2: {
+                info = new file_info();
+                break;
+            }
             case SCAP_FD_IPV4_SOCK:
             case SCAP_FD_IPV4_SERVSOCK: {
-                info.end_time = sevt->get_ts();
-                info.exit = true;
+                info = new net_info();
                 break;
             }
             default:
                 return false;
         }
+        info->end_time = sevt->get_ts();
+        info->exit = true;
     }
+
+    info->event_type = static_cast<uint16_t>(type);
+
     switch (s_fdinfo->m_type) {
 		case SCAP_FD_FILE:
         case SCAP_FD_FILE_V2:
@@ -218,21 +244,29 @@ int cpu_converter::add_cpu_data(KindlingEvent* kevt, sinsp_evt *sevt)
         log_attr->set_value_type(CHARBUF);
     }
 
-    auto file_info = file_cache->GetInfo(s_tinfo->m_tid, off_time, off_type);
-    if (file_info != "") {
-        // LOG(INFO) << "related file info: " << file_info;
-        auto file_attr = kevt->add_user_attributes();
-        file_attr->set_key("file_info");
-        file_attr->set_value(file_info);
-        file_attr->set_value_type(CHARBUF);
+    string info = "";
+    for (int i = 0; i < off_time.size(); i++) {
+        switch (off_type[i]) {
+            case 1: {
+                info.append(file_cache->GetInfo(s_tinfo->m_tid, off_time[i], off_type[i]));
+                break;
+            }
+            case 2: {
+                info.append(net_cache->GetInfo(s_tinfo->m_tid, off_time[i], off_type[i]));
+                break;
+            }
+            case 4: {
+                info.append(epoll_cache->GetInfo(s_tinfo->m_tid, off_time[i], off_type[i]));
+                break;
+            }
+        }
+        info.append("|");
     }
-
-    auto net_info = net_cache->GetInfo(s_tinfo->m_tid, off_time, off_type);
-    if (net_info != "") {
-        // LOG(INFO) << "related net info: " << net_info;
+    if (info.length() != off_time.size()) {
+        LOG(INFO) << "related off info: " << info;
         auto file_attr = kevt->add_user_attributes();
-        file_attr->set_key("net_info");
-        file_attr->set_value(net_info);
+        file_attr->set_key("off info");
+        file_attr->set_value(info);
         file_attr->set_value_type(CHARBUF);
     }
     // merge();
