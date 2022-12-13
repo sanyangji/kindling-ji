@@ -88,10 +88,24 @@ void sub_event(char* eventName, char* category, event_params_for_subscribe param
 }
 
 void suppress_events_comm(sinsp* inspector) {
-  const string comms[] = {"kindling-collec", "sshd",           "containerd",      "dockerd",
-                          "containerd-shim", "kubelet",        "kube-apiserver",  "etcd",
-                          "kube-controller", "kube-scheduler", "kube-rbac-proxy", "prometheus",
-                          "node_exporter",   "alertmanager",   "adapter"};
+  const string comms[] = {"kindling-collec",
+                          "kindling-camera"
+                          "sshd",
+                          "containerd",
+                          "dockerd",
+                          "containerd-shim",
+                          "kubelet",
+                          "kube-apiserver",
+                          "etcd",
+                          "kube-proxy",
+                          "flanneld"
+                          "kube-controller",
+                          "kube-scheduler",
+                          "kube-rbac-proxy",
+                          "prometheus",
+                          "node_exporter",
+                          "alertmanager",
+                          "adapter"};
   for (auto& comm : comms) {
     inspector->suppress_events_comm(comm);
   }
