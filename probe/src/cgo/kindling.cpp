@@ -881,7 +881,7 @@ void attach_pid(char* pid, bool is_new_start, bool is_attach, bool is_all_attach
   } else {
     string attach_command_prefix;
     if (is_attach) {
-      attach_command_prefix = "./async-profiler/profiler.sh start ";
+      attach_command_prefix = "./async-profiler/profiler.sh -e cpu start ";
     } else {
       attach_command_prefix = "./async-profiler/profiler.sh stop ";
     }
